@@ -1,0 +1,61 @@
+# ===========================================
+# 轻量化售后工单系统 - Docker Compose 编排
+# 用于本地开发环境，启动中间件服务
+# ===========================================
+
+version: "3.8"
+
+services:
+  # ========== PostgreSQL 数据库 ==========
+  postgres:
+    image: postgres:16-alpine
+    container_name: wo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: work_order
+      POSTGRES_PASSWORD: work_order_2024
+      POSTGRES_DB: work_order_v1
+      TZ: Asia/Shanghai
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U work_order"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========== Redis 缓存/队列 ==========
+  redis:
+    image: redis:7-alpine
+    container_name: wo-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========== Chroma 向量数据库（二期启用） ==========
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: wo-chroma
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./data/chroma:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

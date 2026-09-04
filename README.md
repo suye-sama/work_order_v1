@@ -709,8 +709,3 @@ backend/app/
 - [ ] Agent 调用监控面板（token 消耗/耗时/成功率）
 - [ ] Prompt 版本管理 + A/B 测试
 
----
-
-## License
-
-MIT — 个人学习项目
